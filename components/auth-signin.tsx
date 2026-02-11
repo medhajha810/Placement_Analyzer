@@ -1,14 +1,15 @@
 'use client'
 
 import React from "react"
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Target, 
   Mail, 
@@ -18,17 +19,53 @@ import {
   Loader2, 
   CheckCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  AlertTriangle
 } from 'lucide-react'
 
 export function AuthSignin() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    // Check for error parameters from OAuth callback
+    const urlError = searchParams.get('error')
+    const errorDescription = searchParams.get('description') || searchParams.get('error_description')
+    
+    if (urlError) {
+      let errorMessage = 'Authentication failed. '
+      
+      switch (urlError) {
+        case 'oauth_exchange_failed':
+          errorMessage = 'Failed to complete Google sign-in. Please try again.'
+          break
+        case 'invalid_request':
+        case 'bad_oauth_state':
+          errorMessage = 'Authentication session expired. Please try signing in again.'
+          break
+        case 'access_denied':
+          errorMessage = 'Access was denied. Please grant necessary permissions to continue.'
+          break
+        case 'callback_failed':
+          errorMessage = 'Sign-in process failed. Please try again.'
+          break
+        default:
+          if (errorDescription) {
+            errorMessage = decodeURIComponent(errorDescription)
+          } else {
+            errorMessage = `Authentication error: ${urlError}`
+          }
+      }
+      
+      setError(errorMessage)
+    }
+  }, [searchParams])
 
   const handleSignin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,11 +114,32 @@ export function AuthSignin() {
     setError('')
     
     try {
-      // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google'
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        },
+      })
+
+      if (error) {
+        setError('Failed to sign in with Google: ' + error.message)
+        setGoogleLoading(false)
+      }
+      
+      // If successful, the browser will redirect to Google
+      // Don't set loading to false here as the page will redirect
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google')
-    } finally {
       setGoogleLoading(false)
     }
   }
@@ -211,10 +269,12 @@ export function AuthSignin() {
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span className="text-sm">{error}</span>
-                </div>
+                <Alert className="border-red-500/20 bg-red-500/10">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <AlertDescription className="text-red-400">
+                    {error}
+                  </AlertDescription>
+                </Alert>
               )}
 
               <Button

@@ -73,11 +73,33 @@ export function AuthSignup() {
     try {
       // Store the intended role in localStorage before OAuth
       localStorage.setItem('pendingRole', role)
-      // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google'
+      
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        },
+      })
+
+      if (error) {
+        setError('Failed to sign up with Google: ' + error.message)
+        setGoogleLoading(false)
+      }
+      
+      // If successful, the browser will redirect to Google
+      // Don't set loading to false here as the page will redirect
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google')
-    } finally {
       setGoogleLoading(false)
     }
   }
