@@ -164,15 +164,6 @@ git push origin main
 # 4. Deploy!
 ```
 
-### Deploy to Other Platforms
-
-PathFinder works on any Node.js hosting:
-- Railway
-- Render
-- Heroku (with paid tier)
-- Docker support available
-
----
 
 ## 🛠️ Development
 
@@ -256,31 +247,7 @@ See [SETUP.md](SETUP.md) for more troubleshooting tips.
 
 ---
 
-## 🎓 Learning Resources
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Documentation](https://react.dev)
-- [Supabase Guide](https://supabase.com/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [shadcn/ui Components](https://ui.shadcn.com)
-
----
-
-## 🔮 Future Roadmap
-
-### Phase 2
-- [ ] Resume parsing and AI matching
-- [ ] Email notifications
-- [ ] Video interview integration
-- [ ] Advanced filtering
-
-### Phase 3
-- [ ] Mobile app (React Native)
-- [ ] Blockchain credentials
-- [ ] Global marketplace
-- [ ] Enterprise features
-
----
 
 ## 📖 API Reference
 
